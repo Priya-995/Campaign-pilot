@@ -4,6 +4,7 @@
   "description": "AI-Native Shopper Engagement CRM - Monorepo Workspace",
   "private": true,
   "scripts": {
+    "build": "npm --prefix frontend install --include=dev && npm --prefix frontend run build",
     "seed": "npm --prefix backend run seed",
     "test:backend": "node backend/src/test_sections_2_5.js",
     "test:e2e": "node backend/src/test_e2e_full.js",
