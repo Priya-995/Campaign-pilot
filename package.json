@@ -1,0 +1,14 @@
+{
+  "name": "campaignpilot-workspace",
+  "version": "1.0.0",
+  "description": "AI-Native Shopper Engagement CRM - Monorepo Workspace",
+  "private": true,
+  "scripts": {
+    "seed": "npm --prefix backend run seed",
+    "test:backend": "node backend/src/test_sections_2_5.js",
+    "test:e2e": "node backend/src/test_e2e_full.js",
+    "test:http": "node backend/src/test_http_services.js",
+    "test": "npm run test:backend && npm run test:e2e",
+    "build:frontend": "npm --prefix frontend run build"
+  }
+}
