@@ -243,7 +243,7 @@ export function CampaignAnalytics() {
               </p>
             </div>
             <span className="text-xs text-slate-400 font-mono">
-              Events: {Object.values(funnel).reduce((a, b) => a + b, 0)} total
+              Events: {((Number(funnel.sent) || 0) + (Number(funnel.delivered) || 0) + (Number(funnel.read) || 0) + (Number(funnel.clicked) || 0) + (Number(funnel.failed) || 0)).toLocaleString('en-IN')} total
             </span>
           </div>
 
