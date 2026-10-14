@@ -83,33 +83,6 @@ CampaignPilot is designed as a **clean multi-service monorepo** consisting of th
 └────────────────────────────────────────────────────────────────────────┘
 ```
 
----
-
-## 🛡️ Software Engineering & Defensibility Decisions
-
-When defending this architecture in an engineering review or interview, these are the core design lines:
-
-### 1. The LLM Never Touches the Database Directly
-* **Why**: Granting an LLM direct SQL/Mongo access introduces severe injection risks, hallucinated queries, slow unbounded table scans, and unpredictable mutations.
-* **How We Do It**: The LLM receives only a constrained context object, returns structured JSON strictly validated by **Zod schemas**. The backend executes native, indexed MongoDB queries deterministically. If validation fails, it triggers the fallback engine instead of failing.
-
-### 2. Why No Vector DB / RAG (Retrieval-Augmented Generation)?
-* **Why**: CRM shopper records are structured, relational, and transactional (order dates, spend totals, order counts, categories). A vector database introduces high query latency, probabilistic similarity errors, and synchronization overhead for data that is natively queried in sub-milliseconds using compound B-Tree database indexes.
-
-### 3. Why No Autonomous Agent Frameworks (LangChain, AutoGen)?
-* **Why**: Shopper marketing follows an explicit, well-defined operational pipeline (`Goal → Audience → Strategy → Message → Launch → Simulated Delivery → Analytics`). Autonomous agent loops often hallucinate, get stuck in infinite execution loops, and are difficult to test and audit. A deterministic finite-state machine provides 100% testability, transparency, and sub-second predictability.
-
-### 4. Deterministic Fallback Mode
-* If `GROQ_API_KEY` is missing, expired, or rate-limited, the system seamlessly routes requests through deterministic keyword rule engines (`usedFallback: true`). The golden path never breaks.
-
-### 5. Genuine Microservice Decoupling
-* The **Channel Simulator** is an entirely separate service running in its own process and port (`:5001`), with its own `package.json` and zero shared imports with the CRM backend. It models third-party messaging aggregators (e.g., Twilio, Gupshup, SendGrid).
-
-### 6. Database-Enforced Webhook Idempotency
-* Network timeouts frequently lead to webhook retries. To guarantee that delivery metrics and attribution never double-count, the CRM enforces a **unique database index on `eventId`**. Duplicate event payloads are detected at the database layer and acknowledged safely with HTTP 200 without reprocessing.
-
----
-
 ## ⚡ The Golden Path (End-to-End Walkthrough)
 
 ```
@@ -380,25 +353,6 @@ erDiagram
 
 ---
 
-## 🧪 Automated Test Suite
-
-CampaignPilot includes automated verification scripts that test the entire pipeline:
-
-```bash
-# 1. Test Segmentation, Personalization, and AI Fallback Modes
-node backend/src/test_sections_2_5.js
-
-# 2. Test Full End-to-End Pipeline & Webhook Idempotency (Replay Attack)
-node backend/src/test_e2e_full.js
-
-# 3. Test Live Dual-Service HTTP Communication (Port 5000 ↔ Port 5001)
-node backend/src/test_http_services.js
-
-# 4. Verify Frontend Production Build
-npm --prefix frontend run build
-```
-
----
 
 ## 🌐 Production Deployment Guide
 
@@ -423,28 +377,6 @@ npm --prefix frontend run build
 * Build Command: `npm run build`
 * Output Directory: `dist`
 * Environment Variables: `VITE_API_BASE_URL=https://<your-backend>.onrender.com/api`.
-
----
-
-## 🎬 5-Minute Evaluation Demo Walkthrough
-
-1. **Dashboard (0:00 - 0:45)**:
-   * View live seeded KPI cards.
-   * Click prompt chip: *"Bring back customers who haven't purchased in the last 60 days and previously spent more than ₹2,000"*.
-   * Click **Build Campaign**.
-2. **Deterministic Audience Evaluation (0:45 - 1:30)**:
-   * Observe intent parsed into deterministic Mongo filters (`daysSinceLastOrder >= 60`, `lifetimeSpend >= 2000`).
-   * Review matched shopper count and inspect deterministic **Inclusion Proofs**.
-3. **Strategy & Message Personalization (1:30 - 2:30)**:
-   * Review AI channel recommendation (WhatsApp), offer (20% OFF), and tone.
-   * View personalized copy rendered for 3 real shoppers with their actual names and coupon codes.
-4. **Launch & Asynchronous Delivery (2:30 - 3:45)**:
-   * Click **Launch Campaign Now**.
-   * Watch live polling on the Campaign Analytics page as the Channel Simulator asynchronously streams events back.
-   * Watch funnel bars (**Sent → Delivered → Opened/Read → Clicked**) climb in real time.
-5. **Insights & Attribution (3:45 - 5:00)**:
-   * Inspect simulated 7-day attribution metrics.
-   * Read the **AI Campaign Analyst** report breakdown (Summary, Patterns, Bottlenecks, and Recommended Next Action).
 
 ---
 
