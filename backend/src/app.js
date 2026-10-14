@@ -17,8 +17,8 @@ app.use(cors({
 
 app.use(express.json());
 
-// Health endpoint
-app.get('/health', (req, res) => {
+// Health endpoints (both /health and /api/health)
+app.get(['/health', '/api/health'], (req, res) => {
   res.status(200).json({
     status: 'ok',
     service: 'backend',
@@ -26,13 +26,21 @@ app.get('/health', (req, res) => {
   });
 });
 
-// API Routes
+// Primary API Routes under /api
 app.use('/api/customers', customerRoutes);
 app.use('/api/segments', segmentRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/campaigns', campaignRoutes);
 app.use('/api/webhooks', webhookRoutes);
 app.use('/api/analytics', analyticsRoutes);
+
+// Fallback Route Aliases (in case client requests without /api prefix)
+app.use('/customers', customerRoutes);
+app.use('/segments', segmentRoutes);
+app.use('/ai', aiRoutes);
+app.use('/campaigns', campaignRoutes);
+app.use('/webhooks', webhookRoutes);
+app.use('/analytics', analyticsRoutes);
 
 // 404 & Centralized Error Handlers
 app.use(notFoundHandler);
